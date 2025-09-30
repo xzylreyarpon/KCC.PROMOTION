@@ -124,7 +124,8 @@ namespace KCC.PROMOTION.WebMethods
                 MerchAppManager.ConnectionModel credential = new MerchAppManager.ConnectionModel();
                 MerchAppManager.AutoEmailModel emailModel = new MerchAppManager.AutoEmailModel();
 
-                if (connection.host == "192.168.32.184")
+                //if (connection.host == "192.168.32.184")
+                if (connection.host == "192.168.34.197")
                 {
                     credential.Username = "merch_app_manager";
                     credential.Password = "m3rchappmanag3r";
