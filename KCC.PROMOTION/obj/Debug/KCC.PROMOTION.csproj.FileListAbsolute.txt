@@ -1,0 +1,6 @@
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\bin\KCC.PROMOTION.dll.config
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\bin\KCC.PROMOTION.dll
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\bin\KCC.PROMOTION.pdb
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\obj\Debug\KCC.PROMOTION.dll
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\obj\Debug\KCC.PROMOTION.pdb
+C:\Users\Jayson-AppsLead\Desktop\DEVELOPER COLLECTION\Promotion\Development\KCC.PROMOTION\bin\Oracle.DataAccess.dll
