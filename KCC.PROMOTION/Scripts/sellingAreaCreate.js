@@ -377,7 +377,7 @@ function initEvents() {
         } else {
             notifyWarning("Can't save transaction without Item", true);
         }
-    });  //end of btnSaveTransaction listener
+    });  // end of btnSaveTransaction listener
 
 
 
@@ -1191,8 +1191,8 @@ function saveTransaction() {
                     multiline: true,
                     position: "center"
                 });
-                window.location.href = "SellingAreaDashboard.aspx";
 
+                window.location.href = "SellingAreaDashboard.aspx";
 
             } else if (response.status == 0) {
                 notifyWarning(response.message);
