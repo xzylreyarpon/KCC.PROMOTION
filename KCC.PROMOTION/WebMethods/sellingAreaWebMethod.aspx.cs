@@ -14,6 +14,8 @@ namespace KCC.PROMOTION.WebMethods
     using System.Data;
     using Oracle.DataAccess;
     using Oracle.DataAccess.Client;
+    using Newtonsoft.Json;
+    using System.Globalization;
 
     public class sa_promo_dates
     {
@@ -69,164 +71,103 @@ namespace KCC.PROMOTION.WebMethods
         public static string insertItem(string barcode, string headId, int location, int department, int promoType, int hasFreeList, int rewardApplication, sa_promo_dates[] promo_datesObj)
         {
             basegeneral obj = new basegeneral();
-            object resp = null;
+            generalModelClass generalModelObj = new generalModelClass();
             string username = HttpContext.Current.Session["username"].ToString();
+
+            // CheckBox promo_datesObj is not empty
+            if (promo_datesObj.Length < 0)
+                return JsonConvert.SerializeObject(
+                    new { status = "0", message = "Promotion must have initial Promo Dates" },
+                    Formatting.Indented);
 
             try
             {
-                DataTable dtItem = new DataTable();
-                dtItem = get_item_detail(barcode, location, department);
+                // Get and validate barcode
+                var dtItem = get_item_detail(barcode, location, department);
                 if (dtItem.Rows.Count < 1)
+                    return JsonConvert.SerializeObject(
+                        new { status = "0", message = "Item is Invalid or Does not belong to the specified filter" },
+                        Formatting.Indented);
+
+                var orin = Convert.ToInt32(dtItem.Rows[0]["orin"]);
+                var itemSrp = get_item_srp(location, barcode);
+
+                // Check SRP, if none default to 0
+                int srp = (itemSrp.Rows.Count > 0) ? Convert.ToInt32(itemSrp.Rows[0]["srp"] ?? 0) : 0;
+
+                if (srp == 0 && rewardApplication == 1)
+                    return JsonConvert.SerializeObject(
+                        new { status = "0", message = "Scanned item have ZERO SRP, please check" },
+                        Formatting.Indented);
+
+                if (string.IsNullOrWhiteSpace(headId))
                 {
-                    //throws this warning if the the barcode 
-                    //has no equivalent orin and other details
-                    //or the item status is Inactive
-                    resp = new { status = "0", message = "Item is Invalid or Does not belong to the specified filter" };
+                    // this means that the item is the very first item of the transaction
+                    // so,must create a head/transaction first
+                    // create new transaction promotion head
+                    headId = create_transaction("", location, department, promoType, hasFreeList, ref obj);
+                    obj.Commit();
                 }
-                else
+
+                var dtCheckItem = get_item_promotion_body(headId, barcode, rewardApplication);
+                if (dtCheckItem.Rows.Count > 0)
+                    return JsonConvert.SerializeObject(
+                        new { status = "0", message = "Item is already on the List kindly refresh your Browser" },
+                        Formatting.Indented);
+
+                var dataItems = GetTranItemDetails(Convert.ToInt32(headId), rewardApplication);
+                if (dataItems.Rows.Count >= 36)
+                    return JsonConvert.SerializeObject(
+                        new { status = "0", message = "You have reached the Maximum No. of Items!" },
+                        Formatting.Indented);
+
+                insert_item(headId, orin, barcode, rewardApplication, username, ref obj);
+
+                foreach (var pdo in promo_datesObj)
                 {
-                    Int32 orin = Convert.ToInt32(dtItem.Rows[0]["orin"]);
-                    DataTable dtPromoConflicts = new DataTable();
-                    DataTable dtMarkdownConflicts = new DataTable();
-                    bool conflictCntr = false;
-                    bool srpIssue = false;
-                    //DateTime _earliestDate = Convert.ToDateTime(earliestDate);
-                    //DateTime _latestDate = Convert.ToDateTime(latestDate);
+                    if (string.IsNullOrWhiteSpace(pdo.startDate) || string.IsNullOrWhiteSpace(pdo.endDate))
+                        return JsonConvert.SerializeObject(
+                            new { status = "0", message = "Invalid promotion date." },
+                            Formatting.Indented);
 
-                    // Remove this function from selling area module and transfer this to the pricer module
-                    //for (int y = 0; y < promo_datesObj.Count(); y++)
-                    //{
-                    //    DateTime startDate = Convert.ToDateTime(promo_datesObj[y].startDate);
-                    //    DateTime endDate = Convert.ToDateTime(promo_datesObj[y].endDate);
-                    //    dtPromoConflicts = new DataTable();
-                    //    dtMarkdownConflicts = new DataTable();
+                    // Parse dates using invariant culture to avoid locale issues (e.g., month names)
+                    // If your inputs are ISO (yyyy-MM-dd), prefer TryParseExact with that format.
+                    // Then pre - format to match plsql expected format: "dd-MMM-yy"
 
-                    //    dtPromoConflicts = get_promotion_conflict(headId, barcode, location, department, startDate.ToString("dd-MMM-yy"), endDate.ToString("dd-MMM-yy"));
-                    //    dtMarkdownConflicts = get_markdown_conflict(barcode, location, department, startDate.ToString("dd-MMM-yy"), endDate.ToString("dd-MMM-yy"));
+                    string startDate = DateTime.Parse(pdo.startDate, CultureInfo.InvariantCulture)
+                        .ToString("dd-MMM-yy", CultureInfo.InvariantCulture);
+                    string endDate = DateTime.Parse(pdo.endDate, CultureInfo.InvariantCulture)
+                        .ToString("dd-MMM-yy", CultureInfo.InvariantCulture);
 
-                    //    if (dtPromoConflicts.Rows.Count > 0)
-                    //    {
-                    //        resp = new { status = "0", message = "PROMOTION CONFLICT <BR/>" + get_conflict_message(dtPromoConflicts) };
-                    //        conflictCntr = true;
-                    //        y = promo_datesObj.Count();
-                    //    }
-                    //    else if (dtMarkdownConflicts.Rows.Count > 0)
-                    //    {
-                    //        resp = new { status = "0", message = "MARKDOWN CONFLICT <BR/>" + get_conflict_message(dtMarkdownConflicts) };
-                    //        conflictCntr = true;
-                    //        y = promo_datesObj.Count();
-                    //    }
-                    //}
+                    // 1) Check promotion conflicts first
+                    var promoConflict = get_promotion_conflict(headId, barcode, location, department, startDate, endDate);
+                    if (promoConflict == null || promoConflict.Rows.Count > 0)
+                        return JsonConvert.SerializeObject(
+                            new { status = "0", message = "PROMOTION CONFLICT <BR/>" + get_conflict_message(promoConflict) },
+                            Formatting.Indented);
 
-                    if (conflictCntr == false)
-                    {
-                        DataTable dtItemSrp = new DataTable();
-                        dtItemSrp = get_item_srp(location, barcode);
-                        double itemSrp = 0;
+                    // 2) Only check markdown if no promo conflict (saves one DB call in the common fail-fast case)
+                    var mdConflict = get_markdown_conflict(barcode, location, department, startDate, endDate);
+                    if (mdConflict == null || mdConflict.Rows.Count > 0)
+                        return JsonConvert.SerializeObject(
+                            new { status = "0", message = "MARKDOWN CONFLICT <BR/>" + get_conflict_message(mdConflict) },
+                            Formatting.Indented);
 
-                        if (dtItemSrp.Rows.Count > 0 && dtItemSrp.Rows[0]["srp"].ToString() != "")
-                        {
-                            itemSrp = Convert.ToInt32(dtItemSrp.Rows[0]["srp"]);
-                        }
-                        else
-                        {
-                            itemSrp = 0;
-                        }
-
-                        if (rewardApplication == 1 && itemSrp == 0) {
-                            srpIssue = true;
-                        }
-
-                        if (srpIssue == false)
-                        {
-                            if (headId == null || headId == "null" || headId == "")
-                            {
-                                //this means that the item is the very first item of the transaction
-                                //so,must create a head/transaction first
-
-                                // create new transaction promotion head
-                                headId = create_transaction("", location, department, promoType, hasFreeList, ref obj);
-                                
-                                // insert the first item in promotion details
-                                insert_item(headId, orin, barcode, rewardApplication, username, ref obj);
-                                obj.Commit();
-                                dtItem = new DataTable();
-                                dtItem = get_item_detail2(Convert.ToInt32(headId), barcode, rewardApplication);
-                                resp = new { status = "1", headId = headId, item = dtItem };
-
-                                //// Note: This is the original code when promo dates is set by the selling area
-                                ////headId = create_transaction("", location, department, promoType, hasFreeList, ref obj);
-                                ////if (promo_datesObj.Count() < 1)
-                                ////{
-                                ////    resp = new { status = "0", message = "Promotion must have initial Promo Dates" };
-                                ////}
-                                ////else
-                                ////{
-                                ////    int x = 0;
-                                ////    generalModelClass generalModelObj = new generalModelClass();
-
-                                ////    for (x = 0; x < promo_datesObj.Count(); x++)
-                                ////    {
-                                ////        DateTime startDate = Convert.ToDateTime(promo_datesObj[x].startDate);
-                                ////        DateTime endDate = Convert.ToDateTime(promo_datesObj[x].endDate);
-                                ////        generalModelObj.insertPromoDate(Convert.ToInt32(headId), startDate.ToString("dd-MMM-yy"), endDate.ToString("dd-MMM-yy"), ref obj);
-                                ////    }
-                                ////    insert_item(headId, orin, barcode, rewardApplication, username, ref obj);
-                                ////    obj.Commit();
-                                ////    dtItem = new DataTable();
-                                ////    dtItem = get_item_detail2(Convert.ToInt32(headId), barcode, rewardApplication);
-                                ////    resp = new { status = "1", headId = headId, item = dtItem };
-                                ////}
-                            }
-                            else
-                            {
-                                DataTable dtCheckItem = new DataTable();
-                                dtCheckItem = get_item_promotion_body(headId, barcode, rewardApplication);
-                                if (dtCheckItem.Rows.Count > 0)
-                                {
-                                    resp = new { status = "0", message = "Item is already on the List kindly refresh your Browser" };
-                                }
-                                else
-                                {
-                                    DataTable dataItems = new DataTable();
-                                    dataItems = GetTranItemDetails(Convert.ToInt32(headId), rewardApplication);
-
-                                    if (dataItems.Rows.Count < 36)
-                                    {
-                                        insert_item(headId, orin, barcode, rewardApplication, username, ref obj);
-                                        obj.Commit();
-                                        dtItem = new DataTable();
-                                        dtItem = get_item_detail2(Convert.ToInt32(headId), barcode, rewardApplication);
-                                        resp = new { status = "1", headId = headId, item = dtItem };
-                                    }
-                                    else
-                                    {
-                                        resp = new { status = "0", message = "You have reached the Maximum No. of Items!" };
-                                    }                                    
-                                }
-                            }
-                            //if it's all ok
-                            //obj.Commit();
-                            //dtItem = new DataTable();
-                            //dtItem = get_item_detail2(Convert.ToInt32(headId), barcode, rewardApplication);
-                            //resp = new { status = "1", headId = headId, item = dtItem };
-                        }
-                        else
-                        {
-                            resp = new { status = "0", message = "Scanned item have ZERO SRP, please check" };
-                        }
-
-                        
-                    }
+                    generalModelObj.insertPromoDate(Convert.ToInt32(headId), startDate, endDate, ref obj);
                 }
+
+                obj.Commit();
+
+                dtItem = get_item_detail2(Convert.ToInt32(headId), barcode, rewardApplication);
+                return JsonConvert.SerializeObject(
+                    new { status = "1", headId, item = dtItem },
+                    Formatting.Indented);
             }
             catch (Exception ex)
             {
                 obj.Rollback();
-                resp = new { status = "2", message = ex.Message };
+                return JsonConvert.SerializeObject(new { status = "2", message = ex.Message }, Formatting.Indented);
             }
-            resp = Newtonsoft.Json.JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.Indented);
-            return resp.ToString();
         }
 
         [WebMethod()]
@@ -338,9 +279,12 @@ namespace KCC.PROMOTION.WebMethods
             try
             {
                 remove_item(headId, barcode, rewardApplication, ref obj);
-                if (rewardApplication == 0) {
+                if (rewardApplication == 0)
+                {
                     generalModelObj.Create_Audit_Trail(headId, "BLANK", UserId, "REMOVE IN FREELIST", orin, barcode, "", "", ref obj);
-                } else {
+                }
+                else
+                {
                     generalModelObj.Create_Audit_Trail(headId, "BLANK", UserId, "REMOVE IN BUYLIST", orin, barcode, "", "", ref obj);
                 }
                 resp = new { status = "1", message = "Item has successfully removed from list" };
@@ -541,7 +485,8 @@ namespace KCC.PROMOTION.WebMethods
             msgObj.From = new System.Net.Mail.MailAddress(sender);
 
             string connectionUse = connection.connectionType;
-            if (connectionUse == "PRODUCTION") {
+            if (connectionUse == "PRODUCTION")
+            {
                 msgObj.To.Add("cherry.a.oliverio@kccmalls.net");
                 msgObj.CC.Add("arvin.chan@kccmalls.net");
                 msgObj.CC.Add("louis.b.wong@kccmalls.net");
@@ -565,11 +510,12 @@ namespace KCC.PROMOTION.WebMethods
                 msgObj.Bcc.Add("jaime.t.villanueva@kccmalls.net");
                 msgObj.Bcc.Add("darmen.torres@kccmalls.net");
             }
-            else {
+            else
+            {
                 msgObj.To.Add("jayson.a.salinas@kccmalls.net");
-               // msgObj.CC.Add("janz.ryanmark.l.buenavista@kccmalls.net");
+                // msgObj.CC.Add("janz.ryanmark.l.buenavista@kccmalls.net");
             }
-            
+
             msgObj.Subject = subject;
             msgObj.Body = body;
             msgObj.IsBodyHtml = true;
