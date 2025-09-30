@@ -7,7 +7,7 @@ var tblFreeListItems;
 var itemRow = null;
 var freeListItemRow = null;
 var varTest = null;
-var dateIdCntr = 0;
+var dateIdCntr = null;
 
 //------------not in use
 var _earliestDate = null;
@@ -34,33 +34,35 @@ $(function () {
             "paging": false,
             "info": false,
             "columns": [
-               { "data": "ORIN" },
-               { "data": "BARCODE" },
-               { "data": "VPN" },
-               { "data": "ITEM_DESC" },
-               { "data": "AGE_CODE",
-                   "width": "60px",
-                   "render": function (data, type, row, meta) {
-                       if (data == null) {
-                           return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode'  maxlength='2' style='width:50px;' value='' />";
-                       } else {
-                           return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode'  maxlength='2' style='width:50px;' value='" + data + "' />";
-                       }
+                { "data": "ORIN" },
+                { "data": "BARCODE" },
+                { "data": "VPN" },
+                { "data": "ITEM_DESC" },
+                {
+                    "data": "AGE_CODE",
+                    "width": "60px",
+                    "render": function (data, type, row, meta) {
+                        if (data == null) {
+                            return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode'  maxlength='2' style='width:50px;' value='' />";
+                        } else {
+                            return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode'  maxlength='2' style='width:50px;' value='" + data + "' />";
+                        }
 
-                   }
-               },
-               { "data": "QTY",
-                   "width": "40px",
-                   "render": function (data, type, row, meta) {
-                       if (data == null) {
-                           return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty'  style='width:40px;' value='' />";
-                       } else {
-                           return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='" + data + "' />";
-                       }
+                    }
+                },
+                {
+                    "data": "QTY",
+                    "width": "40px",
+                    "render": function (data, type, row, meta) {
+                        if (data == null) {
+                            return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty'  style='width:40px;' value='' />";
+                        } else {
+                            return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='" + data + "' />";
+                        }
 
-                   }
-               },
-               { "data": "SRP"}]
+                    }
+                },
+                { "data": "SRP" }]
         });
 
         tblFreeListItems = $('#tblItemsFreeList').DataTable({
@@ -68,11 +70,12 @@ $(function () {
             "paging": false,
             "info": false,
             "columns": [
-               { "data": "ORIN" },
-               { "data": "BARCODE" },
-               { "data": "VPN" },
-               { "data": "ITEM_DESC" },
-                { "data": "AGE_CODE",
+                { "data": "ORIN" },
+                { "data": "BARCODE" },
+                { "data": "VPN" },
+                { "data": "ITEM_DESC" },
+                {
+                    "data": "AGE_CODE",
                     "width": "60px",
                     "render": function (data, type, row, meta) {
                         if (data == null) {
@@ -82,18 +85,19 @@ $(function () {
                         }
                     }
                 },
-               { "data": "QTY",
-                   "width": "40px",
-                   "render": function (data, type, row, meta) {
-                       if (data == null) {
-                           return "<input type='text' class='inputs qtyClass' name='qty' style='width:40px;' value='' />";
-                       } else {
-                           return "<input type='text' class='inputs qtyClass' name='qty' style='width:40px;' value='" + data + "' />";
-                       }
+                {
+                    "data": "QTY",
+                    "width": "40px",
+                    "render": function (data, type, row, meta) {
+                        if (data == null) {
+                            return "<input type='text' class='inputs qtyClass' name='qty' style='width:40px;' value='' />";
+                        } else {
+                            return "<input type='text' class='inputs qtyClass' name='qty' style='width:40px;' value='" + data + "' />";
+                        }
 
-                   }
-               },
-               { "data": "SRP"}]
+                    }
+                },
+                { "data": "SRP" }]
         });
         $('#divFreeList').hide();
 
@@ -101,10 +105,10 @@ $(function () {
         initTblFreeListItemsEvents();
         $('#chkFreeList').prop("disabled", false);
 
-        ShowAllDateElements(false);
+        ShowAllDateElements(true);
     } else {
         $('#divFreeList').hide();
-        
+
         getPromoDate(headId);
         getTransactionDetail(headId);
     }
@@ -124,7 +128,7 @@ function EmptyFields() {
     $('#txtbarcode').val('');
     $('#txtBarcodeFreeList').val('');
     $('#deptName').prop('disabled', true);
-    $('#chkFreeList').prop("checked", false);    
+    $('#chkFreeList').prop("checked", false);
     $('#btnRemove').prop('disabled', true);
 }
 
@@ -258,11 +262,11 @@ function initEvents() {
         if (confirm("Do you want to logout?")) {
             javascript: __doPostBack('ctl00$MainContent$lnklogout', '');
         }
-    })       
+    })
 
     $("#txtbarcode").delimit({
         numbers: true,
-        backSpace:true
+        backSpace: true
     });
 
     $("#txtBarcodeFreeList").delimit({
@@ -296,11 +300,12 @@ function initEvents() {
             $('#txtbarcode').val('');
 
         } else {
-         
+
             if (checkPromotionFields()) {
                 var item = $("#txtbarcode").val();
-                checkOngoingTran(item);
-             
+                //checkOngoingTran(item);        //// Validation should occur in the backend.
+                insertItem("buylist");
+
             }
             //if (checkPromotionFields()) {
             //    if (checkIfSetAllDate()) {
@@ -352,9 +357,9 @@ function initEvents() {
         if (tblHasItem("tblItems")) {
             if ($('#chkFreeList').prop("checked") == true && tblHasItem("tblItemsFreeList") == false) {
                 notifyWarning("Can't save transaction without Free List Item", true);
-            }else if(chechHasEmptyQty('tblItems')){
+            } else if (chechHasEmptyQty('tblItems')) {
                 notifyWarning("Can't save transaction,Plese Fill all Quantity in Buylist Fields", true);
-            }else if(checkHasEmptyAgeCode('tblItems')){
+            } else if (checkHasEmptyAgeCode('tblItems')) {
                 notifyWarning("Can't save transaction,Please Fill all Age Code in Buylist Fields ", true);
             } else if (chechHasEmptyQty('tblItemsFreeList')) {
                 notifyWarning("Can't save transaction,Plese Fill all Quantity in Freelist Fields", true);
@@ -365,10 +370,10 @@ function initEvents() {
             } else if ($('#txtPromoDescription').val().length < 35) {
                 notifyWarning("Description must be 35 characters and above", true);
             } else {
-                 if (confirm("Do you really want to Save this Transaction?")) {
+                if (confirm("Do you really want to Save this Transaction?")) {
                     saveTransaction();
-                 }
-            }          
+                }
+            }
         } else {
             notifyWarning("Can't save transaction without Item", true);
         }
@@ -398,6 +403,10 @@ function initEvents() {
                 if (confirm("Do you really want to remove this Item?")) {
                     removeItem(1);
                 }
+
+                if (itemRow.length < 1) {
+                    ShowAllDateElements(true);
+                }
             }
         }
     })
@@ -411,12 +420,12 @@ function initEvents() {
             } else {
                 if (confirm("Do you really want to remove this Free List Item?")) {
                     removeItem(0);
-                }   
+                }
             }
         }
     })
 
-    
+
 
     $("#btnAddDate").on("click", function () {
         if (checkIfSetAllDate()) {
@@ -433,7 +442,7 @@ function initEvents() {
             initDateField('txtStartDate' + dateIdCntr, 'txtEndDate' + dateIdCntr);
             initRemoveDate();
 
-           
+
             dateIdCntr += 1;
         }
     })
@@ -488,7 +497,7 @@ function populateDateFields(dateObj) {
 
             cellStartDate.innerHTML = "<input type='text' value='" + dateObj[x].START_DATE + "' class='inputs'/>";
             cellEndDate.innerHTML = "<input type='text' value='" + dateObj[x].END_DATE + "' class='inputs'/>";
-        } 
+        }
     }
 }
 
@@ -502,7 +511,7 @@ function ShowAllDateElements(type) {
     } else {
         $('#tblDates tbody tr input').css('display', 'none');
     }
-    disableAllDateElements();
+    //disableAllDateElements();
 }
 
 function getPromoDates() {
@@ -527,9 +536,9 @@ function checkIfSetAllDate() {
         }
     })
 
-    if (cntr == true) 
+    if (cntr == true)
         return true;
-    else 
+    else
         return false;
 } //end of checkIfSetAllDate function
 
@@ -543,9 +552,9 @@ function checkDateHasConflict(toBeComparedDate, dateFieldId) {
     var dtfrom_current_selected = $(currentRow).find('input[type="text"]')[0].value;
     var dtto_current_selected = $(currentRow).find('input[type="text"]')[1].value;
 
-//    var currentRow = $('#tblDates tbody tr:last');
-//    var dtfrom_current_selected = $(currentRow).find('input[type="text"]')[0].value;
-//    var dtto_current_selected = $(currentRow).find('input[type="text"]')[1].value;
+    //    var currentRow = $('#tblDates tbody tr:last');
+    //    var dtfrom_current_selected = $(currentRow).find('input[type="text"]')[0].value;
+    //    var dtto_current_selected = $(currentRow).find('input[type="text"]')[1].value;
     var ret = false;
     $('#tblDates tbody tr:not(:eq(' + $('#' + dateFieldId).parent().parent().index() + '))').each(function () {
 
@@ -555,7 +564,7 @@ function checkDateHasConflict(toBeComparedDate, dateFieldId) {
 
         if (dateClassObj.dates.isBetween(toBeComparedDate, dtfrom, dtto)) {
             ret = true;
-           
+
             //to end each function
             return false;
             //("there's an overlap/Conflict in Specified Date", true);
@@ -644,7 +653,7 @@ function initDateField(startDateFieldId, endDateFieldId) {
             } else if (checkDateHasConflict(this, endDateFieldId) == true) {
                 notifyWarning("there's an overlap/Conflict in Specified Date", true);
                 document.getElementById(endDateFieldId).value = "";
-            }  
+            }
             //alert(this.getMoment().format('Do MMMM YYYY'));
         }
     });
@@ -658,7 +667,7 @@ function initDateField(startDateFieldId, endDateFieldId) {
 
 function tblHasItem(tableId) {
     //checks if item already exists in the table
-    var row = $('#' + tableId +' >tbody >tr');
+    var row = $('#' + tableId + ' >tbody >tr');
     if (row.length > 0) {
         if (row[0].cells.length == 1 && row[0].cells[0].textContent == "No data available in table") {
             return false;
@@ -700,33 +709,33 @@ function updateQty(barcode, rewardApplication, qty) {
 }
 
 
-function updateAgeCode(barcode,rewardApplication,ageCode) {
-        var xmlhttp;
-        if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-            xmlhttp = new XMLHttpRequest();
-        }
-        else {// code for IE6, IE5
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        xmlhttp.onreadystatechange = function () {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                var response;
-                response = jQuery.parseJSON(xmlhttp.response.d);
-                if (response.status == 1) {
-                    
-                } else if (response.status == 0) {
-                    notifyWarning(response.message);
-                } else {
-                    notifyError(response.message);
-                }
-            } else if (xmlhttp.status == 500) {
-                notifyError('Server Connection Error');
+function updateAgeCode(barcode, rewardApplication, ageCode) {
+    var xmlhttp;
+    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    }
+    else {// code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var response;
+            response = jQuery.parseJSON(xmlhttp.response.d);
+            if (response.status == 1) {
+
+            } else if (response.status == 0) {
+                notifyWarning(response.message);
+            } else {
+                notifyError(response.message);
             }
+        } else if (xmlhttp.status == 500) {
+            notifyError('Server Connection Error');
         }
-        xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/updateAgeCode", true);
-        xmlhttp.responseType = "json"
-        xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-        xmlhttp.send("{'headId':'" + headId + "','barcode':'" + barcode + "','rewardApplication':" + rewardApplication + ",'ageCode':'" + ageCode + "'}");
+    }
+    xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/updateAgeCode", true);
+    xmlhttp.responseType = "json"
+    xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    xmlhttp.send("{'headId':'" + headId + "','barcode':'" + barcode + "','rewardApplication':" + rewardApplication + ",'ageCode':'" + ageCode + "'}");
 }
 
 
@@ -742,9 +751,9 @@ function removeItem(rewardApplication) {
         barcode = itemRow.BARCODE;
     } else {
         orin = freeListItemRow.ORIN;
-        barcode = freeListItemRow.BARCODE; ;
+        barcode = freeListItemRow.BARCODE;;
     }
-   
+
 
     if (barcode == "" || barcode == null) {
         notifyWarning("Please select Item to remove");
@@ -881,7 +890,7 @@ function chechHasEmptyQty(tableID) {
 
 function checkHasEmptyAgeCode(tableID) {
     var cntr = false;
-    $('#'+ tableID + ' tbody tr input[name="ageCode"]').each(function () {
+    $('#' + tableID + ' tbody tr input[name="ageCode"]').each(function () {
         if (isEmpty($(this).val())) {
             cntr = true;
             return;
@@ -892,10 +901,10 @@ function checkHasEmptyAgeCode(tableID) {
 
 
 function checkIfItemExist(tableID) {
-    var barcode ;
+    var barcode;
     var rows;
     if (tableID == "tblItems") {
-        barcode= $("#txtbarcode").val().trim();
+        barcode = $("#txtbarcode").val().trim();
         rows = $('#tblItems').find('tbody>tr');
     } else {
         barcode = $("#txtBarcodeFreeList").val().trim();
@@ -958,7 +967,7 @@ function getTransactionDetail(head) {
             var response;
             response = jQuery.parseJSON(xmlhttp.response.d);
             if (response.status == 1) {
-               
+
                 var transactionDetail = response.transactionDetail[0];
                 $('#locName').val(transactionDetail.LOC + ' - ' + transactionDetail.LOC_NAME);
                 $('#locId').val(transactionDetail.LOC);
@@ -977,14 +986,12 @@ function getTransactionDetail(head) {
                     $('#chkFreeList').prop("checked", 'checked');
                     $('#divFreeList').show();
                     getItemsTransaction(headId, 0);
-                   
-
                 }
 
-
-                tranStatus = transactionDetail.STATUS;
-
-                
+                tranStatus = (transactionDetail.STATUS).toString();
+                if (tranStatus.toLowerCase() != '') {
+                    disableAllDateElements();
+                }
 
                 //this is to restrict adding of items
                 if (tranStatus == 'null' || tranStatus == null) {
@@ -1000,8 +1007,6 @@ function getTransactionDetail(head) {
                     $('#btnDone').prop('disabled', 'disabled');
                     $("#btnCancelTransaction").prop('disabled', 'disabled');
                     $("#txtPromoDescription").prop('disabled', 'disabled');
-                   
-                    
                 }
             } else if (response.status == 0) {
                 notifyWarning(response.message);
@@ -1028,8 +1033,8 @@ function insertItem(listType) {
         barcode = $("#txtBarcodeFreeList").val();
         rewardApplication = 0;
     }
-    
-    
+
+
     var loc = $('#locId').val();
     var dept = $('#deptId').val();
     var promoType = $('#cbPromoTypes').val();
@@ -1044,19 +1049,19 @@ function insertItem(listType) {
     }
 
 
-//    if (headId == '' || headId == null || headId == 'null') {
-//        promoDates = getPromoDates();
-//    } else {
-//        promoDates = [];
-//    }
+    if (headId == '' || headId == null || headId == 'null') {
+        promoDates = getPromoDates();
+    } else {
+        promoDates = [];
+    }
 
-//    if(_earliestDate == null){
-//        _earliestDate = getEarliestDate();
-//    }
+    if (_earliestDate == null) {
+        _earliestDate = getEarliestDate();
+    }
 
-//    if(_latestDate == null){
-//        _latestDate = getLatestDate();
-//    }
+    if (_latestDate == null) {
+        _latestDate = getLatestDate();
+    }
 
     var xmlhttp;
     if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
@@ -1077,7 +1082,8 @@ function insertItem(listType) {
                 if (listType == "buylist") {
                     disableBarcodeElement(listType);
 
-                    tblItems.row.add({ "ORIN": item.ORIN,
+                    tblItems.row.add({
+                        "ORIN": item.ORIN,
                         "BARCODE": item.BARCODE,
                         "VPN": item.VPN,
                         "ITEM_DESC": item.ITEM_DESC,
@@ -1095,7 +1101,8 @@ function insertItem(listType) {
                 } else {
                     disableBarcodeElement(listType);
 
-                    tblFreeListItems.row.add({ "ORIN": item.ORIN,
+                    tblFreeListItems.row.add({
+                        "ORIN": item.ORIN,
                         "BARCODE": item.BARCODE,
                         "VPN": item.VPN,
                         "ITEM_DESC": item.ITEM_DESC,
@@ -1135,22 +1142,22 @@ function insertItem(listType) {
             disableBarcodeElement(listType);
         }
     }
-        xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/insertItem", true);
-        xmlhttp.responseType = "json"
-        xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-        //xmlhttp.send("{'barcode':'" + barcode + "','headId':'" + headId + "','location':'" + loc + "', 'department':'" + dept + "','promo_datesObj':'"+ promoDates +"'}");
-        xmlhttp.send(JSON.stringify({ barcode: barcode, headId: headId, location: loc, department: dept, promoType: promoType,hasFreeList:hasFreeList, rewardApplication: rewardApplication, promo_datesObj: promoDates }));
-    }
+    xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/insertItem", true);
+    xmlhttp.responseType = "json"
+    xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    //xmlhttp.send("{'barcode':'" + barcode + "','headId':'" + headId + "','location':'" + loc + "', 'department':'" + dept + "','promo_datesObj':'"+ promoDates +"'}");
+    xmlhttp.send(JSON.stringify({ barcode: barcode, headId: headId, location: loc, department: dept, promoType: promoType, hasFreeList: hasFreeList, rewardApplication: rewardApplication, promo_datesObj: promoDates }));
+}
 
-    function disableBarcodeElement(listType) {
-        if (listType == "buylist") {
-            $('#txtbarcode').val('');
-            $('#txtbarcode').prop('disabled', false);
-        } else {
-            $('#txtBarcodeFreeList').val('');
-            $('#txtBarcodeFreeList').prop('disabled', false);
-        }
+function disableBarcodeElement(listType) {
+    if (listType == "buylist") {
+        $('#txtbarcode').val('');
+        $('#txtbarcode').prop('disabled', false);
+    } else {
+        $('#txtBarcodeFreeList').val('');
+        $('#txtBarcodeFreeList').prop('disabled', false);
     }
+}
 
 function saveTransaction() {
 
@@ -1184,6 +1191,8 @@ function saveTransaction() {
                     multiline: true,
                     position: "center"
                 });
+                window.location.href = "SellingAreaDashboard.aspx";
+
 
             } else if (response.status == 0) {
                 notifyWarning(response.message);
@@ -1199,7 +1208,7 @@ function saveTransaction() {
     xmlhttp.responseType = "json"
     xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
     //xmlhttp.send("{'headId':'" + headId + "','description':'" + description + "'}");
-    xmlhttp.send(JSON.stringify({ headId: headId, description: description}));
+    xmlhttp.send(JSON.stringify({ headId: headId, description: description }));
 }
 
 
@@ -1243,207 +1252,213 @@ function cancelTransaction() {
 }
 
 
-function getItemsTransaction(head,rewardApplication) {
+function getItemsTransaction(head, rewardApplication) {
     //REWARD APPLICATION
     //0 - freelist items
     //1 - buylist items
-    
-        var xmlhttp;
-        if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-            xmlhttp = new XMLHttpRequest();
-        }
-        else {// code for IE6, IE5
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        xmlhttp.onreadystatechange = function () {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                var response;
-                response = jQuery.parseJSON(xmlhttp.response.d);
 
-                if (response.status == 1) {
+    var xmlhttp;
+    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
+    }
+    else {// code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var response;
+            response = jQuery.parseJSON(xmlhttp.response.d);
 
-                    //this means that items to be loaded are buylist items
-                    if (rewardApplication == 1) {
-                        tblItems = $('#tblItems').DataTable({
-                            "scrollY": "330px",
-                            "paging": false,
-                            "info": false,
-                            "data": response.item,
-                            "columns": [
-                                     { "data": "ORIN" },
-                                     { "data": "BARCODE" },
-                                     { "data": "VPN" },
-                                     { "data": "ITEM_DESC" },
-                                     { "data": "AGE_CODE",
-                                         "width": "60px",
-                                         "render": function (data, type, row, meta) {
-                                             if (data == null) {
-                                                 return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='' />";
-                                             } else {
-                                                 return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='" + data + "' />";
-                                             }
+            if (response.status == 1) {
 
-                                         }
-                                     },
-                                     { "data": "QTY",
-                                         "width": "40px",
-                                         "render": function (data, type, row, meta) {
-                                             if (data == null) {
-                                                 return "<input type='text' class='inputs qtyClass' name='qty' tabindex='1' style='width:40px;' value='' />";
-                                             } else {
-                                                 return "<input type='text' class='inputs qtyClass' name='qty' tabindex='1' style='width:40px;' value='" + data + "' />";
-                                             }
+                //this means that items to be loaded are buylist items
+                if (rewardApplication == 1) {
+                    tblItems = $('#tblItems').DataTable({
+                        "scrollY": "330px",
+                        "paging": false,
+                        "info": false,
+                        "data": response.item,
+                        "columns": [
+                            { "data": "ORIN" },
+                            { "data": "BARCODE" },
+                            { "data": "VPN" },
+                            { "data": "ITEM_DESC" },
+                            {
+                                "data": "AGE_CODE",
+                                "width": "60px",
+                                "render": function (data, type, row, meta) {
+                                    if (data == null) {
+                                        return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='' />";
+                                    } else {
+                                        return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='" + data + "' />";
+                                    }
 
-                                         }
-                                     },
-                                     { "data": "SRP",
-                                         "width": "40px"
-                                     }
-                                     ]
-                        });
+                                }
+                            },
+                            {
+                                "data": "QTY",
+                                "width": "40px",
+                                "render": function (data, type, row, meta) {
+                                    if (data == null) {
+                                        return "<input type='text' class='inputs qtyClass' name='qty' tabindex='1' style='width:40px;' value='' />";
+                                    } else {
+                                        return "<input type='text' class='inputs qtyClass' name='qty' tabindex='1' style='width:40px;' value='" + data + "' />";
+                                    }
 
-                        if (tblHasItem("tblItems")) {
-                            var total_items = $('#tblItems').find('tbody>tr').length;
-                            $('#total_items').text(total_items);
-                        }
+                                }
+                            },
+                            {
+                                "data": "SRP",
+                                "width": "40px"
+                            }
+                        ]
+                    });
 
-                        if (tranStatus != null) {
-                            $("#tblItems tbody tr input[type='text']").prop('disabled', 'disabled');
-                        }
-                       
+                    if (tblHasItem("tblItems")) {
+                        var total_items = $('#tblItems').find('tbody>tr').length;
+                        $('#total_items').text(total_items);
+                    }
 
-                        $(".qtyClass").delimit({
-                            numbers: true,
-                            backSpace: true,
-                            control: true
-                        });
-
-                        $(".ageCodeClass").delimit({
-                            letters: true,
-                            backSpace: true,
-                            control: true
-                        });
-
-                        initTblItemsEvents();
-                    } else {
-                        //this means that items to be loaded are freelist items
-                        tblFreeListItems = $('#tblItemsFreeList').DataTable({
-                            "scrollY": "330px",
-                            "paging": false,
-                            "info": false,
-                            "data": response.item,
-                            "columns": [
-                                     { "data": "ORIN" },
-                                     { "data": "BARCODE" },
-                                     { "data": "VPN" },
-                                     { "data": "ITEM_DESC" },
-                                     { "data": "AGE_CODE",
-                                         "width": "60px",
-                                         "render": function (data, type, row, meta) {
-                                             if (data == null) {
-                                                 return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='' />";
-                                             } else {
-                                                 return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='" + data + "' />";
-                                             }
-
-                                         }
-                                     },
-                                     { "data": "QTY",
-                                         "width": "40px",
-                                         "render": function (data, type, row, meta) {
-                                             if (data == null) {
-                                                 return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='' />";
-                                             } else {
-                                                 return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='" + data + "' />";
-                                             }
-
-                                         }
-                                     },
-                                     { "data": "SRP" }
-                                     ]
-                        });
-
-                        if (tblHasItem("tblItemsFreeList")) {
-                            var total_freeList_items = $('#tblItemsFreeList').find('tbody>tr').length;
-                            $('#total_freeList_items').text(total_freeList_items);
-                        }
-
-                        if (tranStatus != null) {
-                            $("#tblItemsFreeList tbody tr input[type='text']").prop('disabled', 'disabled');
-                        }
-
-                        $(".qtyClass").delimit({
-                            numbers: true,
-                            backSpace: true
-                        });
-
-                        $(".ageCodeClass").delimit({
-                            letters: true,
-                            backSpace: true
-                        });
-
-                        initTblFreeListItemsEvents();
+                    if (tranStatus != null) {
+                        $("#tblItems tbody tr input[type='text']").prop('disabled', 'disabled');
                     }
 
 
-                } else if (response.status == 0) {
-                    notifyWarning(response.message);
+                    $(".qtyClass").delimit({
+                        numbers: true,
+                        backSpace: true,
+                        control: true
+                    });
+
+                    $(".ageCodeClass").delimit({
+                        letters: true,
+                        backSpace: true,
+                        control: true
+                    });
+
+                    initTblItemsEvents();
                 } else {
-                    notifyError(response.message);
+                    //this means that items to be loaded are freelist items
+                    tblFreeListItems = $('#tblItemsFreeList').DataTable({
+                        "scrollY": "330px",
+                        "paging": false,
+                        "info": false,
+                        "data": response.item,
+                        "columns": [
+                            { "data": "ORIN" },
+                            { "data": "BARCODE" },
+                            { "data": "VPN" },
+                            { "data": "ITEM_DESC" },
+                            {
+                                "data": "AGE_CODE",
+                                "width": "60px",
+                                "render": function (data, type, row, meta) {
+                                    if (data == null) {
+                                        return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='' />";
+                                    } else {
+                                        return "<input type='text' class='inputs ageCodeClass' tabindex='1' name='ageCode' maxlength='2' style='width:50px;' value='" + data + "' />";
+                                    }
+
+                                }
+                            },
+                            {
+                                "data": "QTY",
+                                "width": "40px",
+                                "render": function (data, type, row, meta) {
+                                    if (data == null) {
+                                        return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='' />";
+                                    } else {
+                                        return "<input type='text' class='inputs qtyClass' tabindex='1' name='qty' style='width:40px;' value='" + data + "' />";
+                                    }
+
+                                }
+                            },
+                            { "data": "SRP" }
+                        ]
+                    });
+
+                    if (tblHasItem("tblItemsFreeList")) {
+                        var total_freeList_items = $('#tblItemsFreeList').find('tbody>tr').length;
+                        $('#total_freeList_items').text(total_freeList_items);
+                    }
+
+                    if (tranStatus != null) {
+                        $("#tblItemsFreeList tbody tr input[type='text']").prop('disabled', 'disabled');
+                    }
+
+                    $(".qtyClass").delimit({
+                        numbers: true,
+                        backSpace: true
+                    });
+
+                    $(".ageCodeClass").delimit({
+                        letters: true,
+                        backSpace: true
+                    });
+
+                    initTblFreeListItemsEvents();
                 }
+
+
+            } else if (response.status == 0) {
+                notifyWarning(response.message);
+            } else {
+                notifyError(response.message);
             }
         }
-        xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/getItemsTransaction", true);
-        xmlhttp.responseType = "json"
-        xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-        xmlhttp.send("{'headId':'" + head + "','rewardApplication':" + rewardApplication + "}");
     }
+    xmlhttp.open("POST", "WebMethods/sellingAreaWebMethod.aspx/getItemsTransaction", true);
+    xmlhttp.responseType = "json"
+    xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    xmlhttp.send("{'headId':'" + head + "','rewardApplication':" + rewardApplication + "}");
+}
 
 
-    function disableFilterFields() {
-        $('#locName').prop('disabled','disabled');
-        $('#deptName').prop('disabled', 'disabled');
-        $('#cbPromoTypes').prop('disabled', 'disabled');
-        $('#chkFreeList').prop("disabled", "disabled");
-    };
+function disableFilterFields() {
+    $('#locName').prop('disabled', 'disabled');
+    $('#deptName').prop('disabled', 'disabled');
+    $('#cbPromoTypes').prop('disabled', 'disabled');
+    $('#chkFreeList').prop("disabled", "disabled");
+};
 
 
 // ADDED FUNCTION TO CHECK ONGOING TRAN (PROMOTION MARKDOWN) - JAYSON SALINAS V 2.0.0.6
-    function checkOngoingTran(item) {
-        var loc = $('#locId').val();
-        var dept = $('#deptId').val();
-        var tranId = 0;
-        var xmlhttp;
-        if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
-            xmlhttp = new XMLHttpRequest();
-        }
-        else {// code for IE6, IE5
-            xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-        }
-        xmlhttp.onreadystatechange = function () {
-            if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                var response;
-                response = jQuery.parseJSON(xmlhttp.response.d);
-                if (response.status == 1) {
-                    if (response.message == null) {
-                        insertItem("buylist");
-                    } else {
-                        notifyWarning(response.message);
-                        insertItem("buylist");
-                    }   
-                } else if (response.status == 0) {
-                   
-                    notifyError(response.message);                   
-                } else {
-                    notifyError(response.message);                
-                }
-            } else if (xmlhttp.status == 500) {
-                notifyError('Server Connection Error');
-                document.getElementById(txtDateElementId).value = "";
-            }
-        }
-        xmlhttp.open("POST", "WebMethods/generalWebMethod.aspx/checkOngoingTran", true);
-        xmlhttp.responseType = "json";
-        xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-        xmlhttp.send("{'item':'" + item + "','location':" + loc + ",'department':" + dept + ",'tranId':" + tranId + "}");
+// Suggestion: Best practice and optimization, validation for on going promotion should be executed on back end
+function checkOngoingTran(item) {
+    var loc = $('#locId').val();
+    var dept = $('#deptId').val();
+    var tranId = 0;
+    var xmlhttp;
+    if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp = new XMLHttpRequest();
     }
+    else {// code for IE6, IE5
+        xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+    xmlhttp.onreadystatechange = function () {
+        if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+            var response;
+            response = jQuery.parseJSON(xmlhttp.response.d);
+            if (response.status == 1) {
+                if (response.message == null) {
+                    insertItem("buylist");
+                } else {
+                    notifyWarning(response.message);
+                    insertItem("buylist");
+                }
+            } else if (response.status == 0) {
+
+                notifyError(response.message);
+            } else {
+                notifyError(response.message);
+            }
+        } else if (xmlhttp.status == 500) {
+            notifyError('Server Connection Error');
+            document.getElementById(txtDateElementId).value = "";
+        }
+    }
+    xmlhttp.open("POST", "WebMethods/generalWebMethod.aspx/checkOngoingTran", true);
+    xmlhttp.responseType = "json";
+    xmlhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+    xmlhttp.send("{'item':'" + item + "','location':" + loc + ",'department':" + dept + ",'tranId':" + tranId + "}");
+}
