@@ -13,42 +13,51 @@ namespace KCC.PROMOTION.WebMethods
     using System.Web.Services;
     using promotions;
     using KCC.PROMOTION.Model;
+    using Newtonsoft.Json;
 
     public partial class generalWebMethod : System.Web.UI.Page
     {
         [WebMethod()]
         public static string checkOngoingTran(int tranId, int location, int department, string item)
         {
-            object resp = null;
             try
             {
-                DataTable dtPromoConflict = new DataTable();
-                DataTable dtMarkdownConflicts = new DataTable();
                 generalModelClass generalModelObj = new generalModelClass();
 
-                dtPromoConflict = generalModelObj.get_item_promotion_conflict(item, tranId, location, department);
-                dtMarkdownConflicts = generalModelObj.get_item_markdown_conflict(item, location, department);
-
+                var dtPromoConflict = generalModelObj.get_item_promotion_conflict(item, tranId, location, department);
                 if (dtPromoConflict.Rows.Count > 0)
-                {
-                    resp = new { status = "1", message = "PROMOTION CONFLICT <BR/>" + get_conflict_message(dtPromoConflict) , data = dtPromoConflict };
-                }
-                else if (dtMarkdownConflicts.Rows.Count > 0)
-                {
-                    resp = new { status = "0", message = "CANNOT ADD ITEM <BR/> ON GOING MARKDOWN CONFLICT <BR/>" + get_conflict_message(dtMarkdownConflicts), data = dtMarkdownConflicts };
-                }
-                else
-                {
-                    resp = new { status = "1" };
-                }
+                    return JsonConvert.SerializeObject(
+                        new { status = "1", message = "PROMOTION CONFLICT <BR/>" + get_conflict_message(dtPromoConflict), data = dtPromoConflict },
+                        Formatting.Indented);
+
+                var dtMarkdownConflicts = generalModelObj.get_item_markdown_conflict(item, location, department);
+                if (dtMarkdownConflicts.Rows.Count > 0)
+                    return JsonConvert.SerializeObject(new { status = "0", message = "CANNOT ADD ITEM <BR/> ON GOING MARKDOWN CONFLICT <BR/>" + get_conflict_message(dtMarkdownConflicts), data = dtMarkdownConflicts },
+                        Formatting.Indented);
+
+                return JsonConvert.SerializeObject(new { status = "1", message = "NO CONFLICT" }, Formatting.Indented);
+
+                //dtPromoConflict = generalModelObj.get_item_promotion_conflict(item, tranId, location, department);
+                //dtMarkdownConflicts = generalModelObj.get_item_markdown_conflict(item, location, department);
+
+                //if (dtPromoConflict.Rows.Count > 0)
+                //{
+                //    resp = new { status = "1", message = "PROMOTION CONFLICT <BR/>" + get_conflict_message(dtPromoConflict) , data = dtPromoConflict };
+                //}
+                //else if (dtMarkdownConflicts.Rows.Count > 0)
+                //{
+                //    resp = new { status = "0", message = "CANNOT ADD ITEM <BR/> ON GOING MARKDOWN CONFLICT <BR/>" + get_conflict_message(dtMarkdownConflicts), data = dtMarkdownConflicts };
+                //}
+                //else
+                //{
+                //    resp = new { status = "1" };
+                //}
 
             }
             catch (Exception ex)
             {
-                resp = new { status = "2", message = ex.Message };
+                return JsonConvert.SerializeObject(new { status = "2", message = ex.Message }, Formatting.Indented);
             }
-            resp = Newtonsoft.Json.JsonConvert.SerializeObject(resp, Newtonsoft.Json.Formatting.Indented);
-            return resp.ToString();
         }
 
         private static string get_conflict_message(DataTable dtConflict)
@@ -114,7 +123,8 @@ namespace KCC.PROMOTION.WebMethods
                 MerchAppManager.ConnectionModel credential = new MerchAppManager.ConnectionModel();
                 MerchAppManager.AutoEmailModel emailModel = new MerchAppManager.AutoEmailModel();
 
-                if (connection.host == "192.168.32.184")
+                //if (connection.host == "192.168.32.184")
+                if (connection.host == "192.168.34.197")
                 {
                     credential.Username = "merch_app_manager";
                     credential.Password = "m3rchappmanag3r";
@@ -124,7 +134,7 @@ namespace KCC.PROMOTION.WebMethods
                     credential.Username = "merch_app_manager_dev";
                     credential.Password = "appmanagerdev";
                 }
-                
+
                 dtTransaction = generalModelObj.get_transaction_detail(headId);
                 if (dtTransaction.Rows.Count > 0)
                 {
@@ -297,7 +307,7 @@ namespace KCC.PROMOTION.WebMethods
             return dtLocation;
         }
 
-      
+
 
     }
 }
